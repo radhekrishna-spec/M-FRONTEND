@@ -22,7 +22,7 @@ export default function SubmitSection({ confessionText }) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            confession: confessionText,
+            message: confessionText,
           }),
         },
       );
