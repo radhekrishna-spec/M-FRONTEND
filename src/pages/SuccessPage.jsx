@@ -1,22 +1,43 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function SuccessPage() {
-  const { state } = useLocation();
+  const location = useLocation();
   const navigate = useNavigate();
 
+  const initialDetails = useMemo(() => {
+    try {
+      return (
+        location.state ||
+        JSON.parse(sessionStorage.getItem('confessionDetails')) ||
+        null
+      );
+    } catch {
+      return location.state || null;
+    }
+  }, [location.state]);
+
+  const [details, setDetails] = useState(initialDetails);
   const [showLoader, setShowLoader] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails, setShowDetails] = useState(!!initialDetails);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (!state) {
+    if (!details) {
       navigate('/');
+      return;
     }
-  }, [state, navigate]);
+
+    // keep session safe for reload
+    sessionStorage.setItem(
+      'confessionDetails',
+      JSON.stringify(details)
+    );
+  }, [details, navigate]);
 
   const handleViewDetails = () => {
     setShowLoader(true);
+    setShowDetails(false);
     setProgress(0);
 
     let value = 0;
@@ -27,46 +48,57 @@ export default function SuccessPage() {
 
       if (value >= 100) {
         clearInterval(interval);
+
+        try {
+          const saved = JSON.parse(
+            sessionStorage.getItem('confessionDetails')
+          );
+
+          if (saved) {
+            setDetails(saved);
+          }
+        } catch {}
+
         setShowLoader(false);
         setShowDetails(true);
       }
-    }, 100);
+    }, 80);
   };
 
-  if (!state) return null;
+  if (!details) return null;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-100 via-white to-purple-100 px-4 py-10">
       <div className="relative bg-white/90 backdrop-blur-xl p-8 rounded-[2rem] shadow-2xl text-center max-w-md w-full border border-violet-100 overflow-hidden">
-        
-        {/* Glow circles */}
-        <div className="absolute -top-10 -left-10 h-32 w-32 rounded-full bg-violet-200 opacity-30 blur-3xl" />
-        <div className="absolute -bottom-10 -right-10 h-32 w-32 rounded-full bg-purple-200 opacity-30 blur-3xl" />
 
-        {/* Header */}
+        {/* background glow */}
+        <div className="absolute -top-10 -left-10 h-36 w-36 rounded-full bg-violet-300 opacity-20 blur-3xl" />
+        <div className="absolute -bottom-10 -right-10 h-36 w-36 rounded-full bg-purple-300 opacity-20 blur-3xl" />
+
+        {/* header */}
         <div className="relative z-10">
-          <div className="text-6xl animate-bounce mb-3">💌</div>
+          <div className="text-6xl mb-3 animate-bounce">💌</div>
 
           <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
             Submitted Successfully
           </h1>
 
           <p className="mt-4 text-gray-700 leading-7">
-            Your confession has been submitted successfully and is now safely
-            being processed.
+            Your confession has been safely submitted and added to our secure
+            processing queue.
           </p>
 
           <p className="mt-3 text-sm text-gray-500 leading-6">
-            🔒 Your identity is completely anonymous and secure.
+            🔒 Your identity remains completely anonymous and protected.
           </p>
         </div>
 
-        {/* Buttons */}
+        {/* pre details buttons */}
         {!showDetails && !showLoader && (
           <div className="relative z-10 mt-6">
             <div className="rounded-2xl bg-violet-50 border border-violet-100 p-4 text-sm text-gray-600 leading-6">
-              ⏳ Tap below to view your confession details and estimated posting
-              time.
+              ⏳ Tap below to check your confession number, queue position and
+              estimated posting time.
             </div>
 
             <button
@@ -85,7 +117,7 @@ export default function SuccessPage() {
           </div>
         )}
 
-        {/* Loader */}
+        {/* loader */}
         {showLoader && (
           <div className="relative z-10 mt-6">
             <p className="text-sm text-gray-600 mb-3">
@@ -94,7 +126,7 @@ export default function SuccessPage() {
 
             <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
               <div
-                className="bg-gradient-to-r from-violet-600 to-purple-600 h-3 transition-all duration-100"
+                className="bg-gradient-to-r from-violet-600 to-purple-600 h-3 transition-all duration-75"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -105,7 +137,7 @@ export default function SuccessPage() {
           </div>
         )}
 
-        {/* Details */}
+        {/* details */}
         {showDetails && (
           <div className="relative z-10 mt-6 border-t border-violet-100 pt-6 text-left">
             <h2 className="text-lg font-semibold text-violet-700 mb-4 text-center">
@@ -116,29 +148,34 @@ export default function SuccessPage() {
               <div className="rounded-2xl bg-violet-50 p-4 border border-violet-100">
                 <p className="text-sm text-gray-500">Confession Number</p>
                 <p className="text-lg font-semibold text-violet-700">
-                  #{state.confessionNo}
+                  #{details.confessionNo}
                 </p>
               </div>
 
               <div className="rounded-2xl bg-purple-50 p-4 border border-purple-100">
                 <p className="text-sm text-gray-500">Queue Ahead</p>
                 <p className="text-lg font-semibold text-purple-700">
-                  {state.queueAhead} confession
-                  {state.queueAhead !== 1 ? 's' : ''}
+                  {details.queueAhead} confession
+                  {details.queueAhead !== 1 ? 's' : ''}
                 </p>
               </div>
 
               <div className="rounded-2xl bg-indigo-50 p-4 border border-indigo-100">
                 <p className="text-sm text-gray-500">Expected Post Time</p>
                 <p className="text-lg font-semibold text-indigo-700">
-                  {state.eta}
+                  {details.eta}
                 </p>
               </div>
             </div>
 
             <div className="mt-5 rounded-2xl bg-green-50 border border-green-100 p-4 text-sm text-gray-600 leading-6">
               ✅ Your confession is securely added to the posting queue and will
-              be published as per schedule.
+              be published according to schedule.
+            </div>
+
+            <div className="mt-4 rounded-2xl bg-yellow-50 border border-yellow-100 p-4 text-sm text-gray-600 leading-6">
+              💜 Thank you for trusting Confession Wallah. Your secret is safe
+              with us.
             </div>
 
             <button
