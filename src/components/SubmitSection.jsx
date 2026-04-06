@@ -36,13 +36,14 @@ export default function SubmitSection({ confessionText }) {
       const data = await response.json();
 
       if (data.success) {
-        navigate('/success', {
-          state: {
+        sessionStorage.setItem(
+          'confessionDetails',
+          JSON.stringify({
             confessionNo: data.confessionNo,
             queueAhead: data.queueAhead,
             eta: data.eta,
-          },
-        });
+          }),
+        );
       } else {
         alert('Submission failed');
       }
@@ -67,7 +68,13 @@ export default function SubmitSection({ confessionText }) {
       handler: async function (response) {
         console.log('Payment Success:', response);
 
-        await submitConfession(response);
+        navigate('/success', {
+          state: {
+            loadingDetails: true,
+          },
+        });
+
+        submitConfession(response);
       },
       prefill: {
         name: 'Anonymous User',
