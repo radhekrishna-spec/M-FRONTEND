@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ConfessionForm from '../components/ConfessionForm';
 import ConfessionHero from '../components/ConfessionHero';
 import MoodSelector from '../components/MoodSelector';
@@ -8,6 +8,14 @@ import SubmitSection from '../components/SubmitSection';
 export default function UserConfessionPage() {
   const [charCount, setCharCount] = useState(0);
   const [confessionText, setConfessionText] = useState('');
+  const [college, setCollege] = useState(null);
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/api/college/college-info`)
+      .then((res) => res.json())
+      .then((data) => setCollege(data))
+      .catch((err) => console.log(err));
+  }, []);
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 py-8 px-4 overflow-hidden">
@@ -16,7 +24,7 @@ export default function UserConfessionPage() {
       <div className="absolute bottom-20 right-10 h-52 w-52 rounded-full bg-pink-300/20 blur-3xl animate-pulse"></div>
 
       <div className="relative max-w-2xl mx-auto space-y-6 animate-fadeIn">
-        <ConfessionHero />
+        <ConfessionHero title={college?.name || 'Campus Confessions'} />
 
         <div className="grid grid-cols-3 gap-4">
           <div className="backdrop-blur-lg bg-white/70 rounded-2xl shadow-lg p-4 text-center">
