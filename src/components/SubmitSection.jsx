@@ -15,7 +15,7 @@ export default function SubmitSection({ confessionText }) {
       //setLoading(true);
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/confessions/submit`,
+`${import.meta.env.VITE_API_URL}/api/confessions/submit?collegeId=${collegeId}`,
         {
           method: 'POST',
           headers: {
